@@ -1,9 +1,23 @@
-import { Dimensions, Image, StyleSheet, Text, View } from "react-native";
+import {
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import React from "react";
 import { NewsDataType } from "@/types";
-import { SharedValue } from "react-native-reanimated";
+import Animated, {
+  Extrapolate,
+  Extrapolation,
+  interpolate,
+  SharedValue,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors } from "@/constants/Colors";
+import { Link } from "expo-router";
 
 type Props = {
   sliderItem: NewsDataType;
@@ -14,27 +28,58 @@ type Props = {
 const width = Dimensions.get("screen").width;
 
 const SliderItem = ({ sliderItem, index, scrollX }: Props) => {
+  const rnStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateX: interpolate(
+            scrollX.value,
+            [(index - 1) * width, index * width, (index + 1) * width],
+            [-width * 0.15, 0, width * 0.15],
+            Extrapolation.CLAMP
+          ),
+        },
+        {
+          scale: interpolate(
+            scrollX.value,
+            [(index - 1) * width, index * width, (index + 1) * width],
+            [0.8, 1, 0.8],
+            Extrapolation.CLAMP
+          ),
+        },
+      ],
+    };
+  });
+
   return (
-    <View style={styles.container}>
-      <Image source={{ uri: sliderItem.image_url }} style={styles.image} />
-      <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.8)"]}
-        style={styles.gradient}
-      >
-        <View style={styles.sourceInfo}>
-          {sliderItem.source_icon && (
-            <Image
-              source={{ uri: sliderItem.source_icon }}
-              style={styles.sourceIcon}
-            />
-          )}
-          <Text style={styles.sourceName}>{sliderItem.source_name}</Text>
-        </View>
-        <Text style={styles.title} numberOfLines={2}>
-          {sliderItem.title}
-        </Text>
-      </LinearGradient>
-    </View>
+    // @ts-ignore
+    <Link href={`/news/${sliderItem.article_id}`} asChild>
+      <TouchableOpacity>
+        <Animated.View
+          style={[styles.container, rnStyle]}
+          key={sliderItem.article_id}
+        >
+          <Image source={{ uri: sliderItem.image_url }} style={styles.image} />
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.8)"]}
+            style={styles.gradient}
+          >
+            <View style={styles.sourceInfo}>
+              {sliderItem.source_icon && (
+                <Image
+                  source={{ uri: sliderItem.source_icon }}
+                  style={styles.sourceIcon}
+                />
+              )}
+              <Text style={styles.sourceName}>{sliderItem.source_name}</Text>
+            </View>
+            <Text style={styles.title} numberOfLines={2}>
+              {sliderItem.title}
+            </Text>
+          </LinearGradient>
+        </Animated.View>
+      </TouchableOpacity>
+    </Link>
   );
 };
 
@@ -46,13 +91,12 @@ const styles = StyleSheet.create({
     width: width,
     justifyContent: "center",
     alignItems: "center",
-    // paddingHorizontal: 20,
   },
   image: {
     width: width - 60,
     height: 180,
     borderRadius: 20,
-    // resizeMode: "cover",
+    resizeMode: "cover",
     // marginBottom: 10,
     // paddingHorizontal: 20,
   },
